@@ -16,6 +16,9 @@ build/
 venv/
 env/
 
+hydeOnRAGBench
+hydeOnRAGBench/
+
 # Jupyter Notebook
 .ipynb_checkpoints/
 
