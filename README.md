@@ -19,4 +19,4 @@ jpnaranj@andrew.cmu.edu
 
 hyde is the reproduction of original paper with generator switch to gpt-4o-mini
 
-hydeOnRAGBench is apply the 
+hydeOnRAGBench applys the hyde on RAG Bench dataset
