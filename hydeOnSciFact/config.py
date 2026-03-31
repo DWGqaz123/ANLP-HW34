@@ -15,7 +15,11 @@ MAX_QUERIES = None
 # Models
 EMBED_MODEL = "BAAI/bge-base-en-v1.5"
 LLM_MODEL = "Qwen/Qwen2.5-7B-Instruct"
+HYDE_FALLBACK_MODELS = []
 HF_TOKEN = os.getenv("HF_TOKEN")
+HYDE_PROVIDER = "together"
+HF_INFERENCE_PROVIDER = "hf-inference"
+TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 
 # HyDE generation
 HYDE_PROMPT_TEMPLATE = (

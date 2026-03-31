@@ -13,26 +13,16 @@ Set Hugging Face token:
 export HF_TOKEN=your_token
 ```
 
-## Run
+## Run (Notebooks)
 
-Run both baseline + HyDE comparison:
+Open and run these notebooks from top to bottom:
 
-```bash
-python main.py --mode both --split test --prefer_beir --top_ks 1,3,5,10
-```
+- `run_baseline.ipynb`: baseline dense retrieval on SciFact
+- `run_hyde.ipynb`: HyDE dense retrieval on SciFact
 
-Run baseline only:
+Outputs are saved to:
 
-```bash
-python main.py --mode baseline --split test --prefer_beir --top_ks 1,3,5,10
-```
-
-Run HyDE only:
-
-```bash
-python main.py --mode hyde --split test --prefer_beir --top_ks 1,3,5,10
-```
-
-Outputs are saved to `results/`:
-- `metrics.json`
-- `per_query_results.jsonl`
+- `results/baseline/metrics.json`
+- `results/baseline/per_query_results.jsonl`
+- `results/hyde/metrics.json`
+- `results/hyde/per_query_results.jsonl`

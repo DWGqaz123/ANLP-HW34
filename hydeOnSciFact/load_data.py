@@ -20,41 +20,22 @@ def _build_doc_text(title: str, abstract) -> str:
     return f"Title: {title}\nAbstract: {abstract_text}".strip()
 
 
-def _try_load_beir_scifact(split: str) -> Tuple[Corpus, Queries, Qrels]:
-    """
-    Try several common BEIR-on-HF layouts.
-    Returns corpus, queries, qrels if successful; raises on failure.
-    """
+def _load_one(repo: str, config: str | None, split: str):
+    if config is None:
+        return load_dataset(repo, split=split)
+    return load_dataset(repo, config, split=split)
+
+
+def _try_load_dataset_component(repo: str, configs: list[str | None], splits: list[str]):
     last_error = None
-
-    # Layout A: one dataset with configs corpus/queries/qrels
-    try:
-        corpus_ds = load_dataset("BeIR/scifact", "corpus", split="corpus")
-        queries_ds = load_dataset("BeIR/scifact", "queries", split=split)
-        qrels_ds = load_dataset("BeIR/scifact", "qrels", split=split)
-        return _parse_beir_triplet(corpus_ds, queries_ds, qrels_ds)
-    except Exception as e:  # pragma: no cover
-        last_error = e
-
-    # Layout B: qrels in dedicated dataset
-    try:
-        corpus_ds = load_dataset("BeIR/scifact", "corpus", split="corpus")
-        queries_ds = load_dataset("BeIR/scifact", "queries", split=split)
-        qrels_ds = load_dataset("BeIR/scifact-qrels", split=split)
-        return _parse_beir_triplet(corpus_ds, queries_ds, qrels_ds)
-    except Exception as e:  # pragma: no cover
-        last_error = e
-
-    # Layout C: mteb style dataset naming
-    try:
-        corpus_ds = load_dataset("mteb/scifact", "corpus", split="corpus")
-        queries_ds = load_dataset("mteb/scifact", "queries", split=split)
-        qrels_ds = load_dataset("mteb/scifact", "qrels", split=split)
-        return _parse_beir_triplet(corpus_ds, queries_ds, qrels_ds)
-    except Exception as e:  # pragma: no cover
-        last_error = e
-
-    raise RuntimeError(f"Failed to load BEIR-formatted SciFact. Last error: {last_error}")
+    for cfg in configs:
+        for sp in splits:
+            try:
+                ds = _load_one(repo, cfg, sp)
+                return ds, cfg, sp
+            except Exception as e:  # pragma: no cover
+                last_error = e
+    raise RuntimeError(f"Failed loading component for {repo}. Last error: {last_error}")
 
 
 def _parse_beir_triplet(corpus_ds, queries_ds, qrels_ds) -> Tuple[Corpus, Queries, Qrels]:
@@ -63,7 +44,7 @@ def _parse_beir_triplet(corpus_ds, queries_ds, qrels_ds) -> Tuple[Corpus, Querie
         doc_id = str(row.get("_id", row.get("doc_id", row.get("id"))))
         if doc_id == "None":
             continue
-        text = row.get("text", "")
+        text = row.get("text", row.get("contents", ""))
         title = row.get("title", "")
         if title and text:
             corpus[doc_id] = f"Title: {title}\nPassage: {text}"
@@ -84,13 +65,13 @@ def _parse_beir_triplet(corpus_ds, queries_ds, qrels_ds) -> Tuple[Corpus, Querie
         qid = str(row.get("query-id", row.get("query_id", row.get("qid", row.get("id")))))
         did = str(row.get("corpus-id", row.get("doc_id", row.get("did"))))
         score = row.get("score", row.get("label", 1))
+
         if qid == "None" or did == "None":
             continue
         if isinstance(score, (int, float)) and score <= 0:
             continue
         qrels[qid].add(did)
 
-    # Keep only queries that have labels and existing docs.
     filtered_queries: Queries = {}
     filtered_qrels: Qrels = {}
     for qid, query in queries.items():
@@ -102,58 +83,48 @@ def _parse_beir_triplet(corpus_ds, queries_ds, qrels_ds) -> Tuple[Corpus, Querie
     return corpus, filtered_queries, filtered_qrels
 
 
-def _load_raw_scifact(split: str) -> Tuple[Corpus, Queries, Qrels]:
-    # Raw SciFact layout from HF datasets.
-    corpus_ds = load_dataset("scifact", "corpus", split="train")
+def _try_load_beir_scifact(split: str) -> Tuple[Corpus, Queries, Qrels, str]:
+    # Prefer canonical BEIR repo names first.
+    repos = ["BeIR/scifact", "beir/scifact", "mteb/scifact"]
 
-    # test split in raw scifact often has no evidence labels; fallback later if needed.
-    claims_ds = load_dataset("scifact", "claims", split=split)
+    errors: list[str] = []
+    for repo in repos:
+        try:
+            corpus_ds, corpus_cfg, corpus_split = _try_load_dataset_component(
+                repo,
+                configs=["corpus", None],
+                splits=["corpus", "train", "test"],
+            )
+            queries_ds, queries_cfg, queries_split = _try_load_dataset_component(
+                repo,
+                configs=["queries", None],
+                splits=[split, "queries", "test", "validation", "train"],
+            )
+            qrels_ds, qrels_cfg, qrels_split = _try_load_dataset_component(
+                repo,
+                configs=["qrels", None],
+                splits=[split, "test", "validation", "train"],
+            )
 
-    corpus: Corpus = {}
-    for row in corpus_ds:
-        doc_id = str(row.get("doc_id", row.get("id")))
-        if doc_id == "None":
-            continue
-        corpus[doc_id] = _build_doc_text(row.get("title", ""), row.get("abstract", ""))
+            corpus, queries, qrels = _parse_beir_triplet(corpus_ds, queries_ds, qrels_ds)
+            if corpus and queries and qrels:
+                source = (
+                    f"{repo}"
+                    f" (corpus:{corpus_cfg or 'default'}/{corpus_split},"
+                    f" queries:{queries_cfg or 'default'}/{queries_split},"
+                    f" qrels:{qrels_cfg or 'default'}/{qrels_split})"
+                )
+                return corpus, queries, qrels, source
+            errors.append(f"{repo}: loaded but parsed empty corpus/queries/qrels")
+        except Exception as e:
+            errors.append(f"{repo}: {type(e).__name__}: {e}")
 
-    queries: Queries = {}
-    qrels: Qrels = {}
-
-    for row in claims_ds:
-        qid = str(row.get("id"))
-        claim = row.get("claim", "")
-        evidence = row.get("evidence", {})
-        if not isinstance(claim, str) or not claim.strip():
-            continue
-
-        gold_doc_ids: Set[str] = set()
-        if isinstance(evidence, dict):
-            for doc_id, ev_list in evidence.items():
-                doc_id_str = str(doc_id)
-                if doc_id_str not in corpus:
-                    continue
-
-                include = False
-                if isinstance(ev_list, list) and ev_list:
-                    for ev in ev_list:
-                        if not isinstance(ev, dict):
-                            continue
-                        label = str(ev.get("label", "")).upper()
-                        if label in {"SUPPORT", "SUPPORTS", "CONTRADICT", "REFUTES"}:
-                            include = True
-                            break
-                    # Some dataset variants may omit label in evidence entries.
-                    if not include:
-                        include = True
-
-                if include:
-                    gold_doc_ids.add(doc_id_str)
-
-        if gold_doc_ids:
-            queries[qid] = claim
-            qrels[qid] = gold_doc_ids
-
-    return corpus, queries, qrels
+    raise RuntimeError(
+        "Unable to load BEIR-style SciFact from Hugging Face Hub. "
+        "Tried repos: BeIR/scifact, beir/scifact, mteb/scifact. "
+        "Also note: old dataset-script `scifact` is unsupported in new `datasets` versions. "
+        f"Details: {' | '.join(errors)}"
+    )
 
 
 def load_scifact_data(
@@ -164,21 +135,13 @@ def load_scifact_data(
     """
     Returns: corpus, queries, qrels, source_name
     """
-    if prefer_beir:
-        try:
-            corpus, queries, qrels = _try_load_beir_scifact(split=split)
-            source = "beir_scifact"
-        except Exception:
-            corpus, queries, qrels = _load_raw_scifact(split=split)
-            source = "raw_scifact"
-    else:
-        corpus, queries, qrels = _load_raw_scifact(split=split)
-        source = "raw_scifact"
+    if not prefer_beir:
+        raise RuntimeError(
+            "Only BEIR-style loading is supported in this project now, "
+            "because legacy `scifact` dataset scripts are deprecated by `datasets`."
+        )
 
-    # If chosen split has no labels in raw dataset, fallback to validation.
-    if not queries and source == "raw_scifact" and split != "validation":
-        corpus, queries, qrels = _load_raw_scifact(split="validation")
-        source = "raw_scifact_validation_fallback"
+    corpus, queries, qrels, source = _try_load_beir_scifact(split=split)
 
     if max_queries is not None:
         keep_ids = list(queries.keys())[:max_queries]

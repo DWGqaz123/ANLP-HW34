@@ -15,9 +15,16 @@ build/
 .venv/
 venv/
 env/
-
-hydeOnRAGBench
-hydeOnRAGBench/
+.python-version
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
 
 # Jupyter Notebook
 .ipynb_checkpoints/
@@ -27,16 +34,35 @@ hydeOnRAGBench/
 .env.*
 !.env.example
 
-# Data / index files
+# Data / index / model artifacts
 *.tar.gz
 contriever_msmarco_index/
 *_index/
+*.faiss
+*.index
+*.npy
+*.npz
+*.pt
+*.bin
+*.safetensors
+*.ckpt
 
 # JVM crash logs
 hs_err_pid*.log
 
-# Results / output (keep tracked ones explicitly if needed)
-# results*.json
+# Logs / runtime dumps
+*.log
+*.out
+*.err
+
+# Experiment outputs
+results/
+**/results/
+**/metrics.json
+**/per_query_results.jsonl
+
+# Local experimental workspace (not committed)
+hydeOnRAGBench/
 
 # IDE
 .vscode/
