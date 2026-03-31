@@ -17,6 +17,8 @@ Juan Pablo Naranjo
 Carnegie Mellon University
 jpnaranj@andrew.cmu.edu
 
+
+### Clarification
 hyde is the reproduction of original paper with generator switch to gpt-4o-mini
 
-hydeOnRAGBench applys the hyde on RAG Bench dataset
+hydeOnSciFact applys the hyde on SciFact dataset with EMBED_MODEL = "BAAI/bge-base-en-v1.5" and LLM_MODEL = "Qwen/Qwen2.5-7B-Instruct"
