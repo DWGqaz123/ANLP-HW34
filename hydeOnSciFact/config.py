@@ -34,7 +34,7 @@ HYDE_TEMPERATURE = 0.3
 HYDE_DO_SAMPLE = False
 
 # Retrieval / evaluation
-TOP_KS = [1, 3, 5, 10]
+TOP_KS = [1, 10, 100]
 EMBED_BATCH_SIZE = 64
 
 # Runtime
