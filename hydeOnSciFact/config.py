@@ -14,10 +14,11 @@ MAX_QUERIES = None
 
 # Models
 EMBED_MODEL = "BAAI/bge-base-en-v1.5"
-LLM_MODEL = "Qwen/Qwen2.5-7B-Instruct"
+LLM_MODEL = "gpt-4o-mini"
 HYDE_FALLBACK_MODELS = []
 HF_TOKEN = os.getenv("HF_TOKEN")
-HYDE_PROVIDER = "together"
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+HYDE_PROVIDER = "openai"
 HF_INFERENCE_PROVIDER = "hf-inference"
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 

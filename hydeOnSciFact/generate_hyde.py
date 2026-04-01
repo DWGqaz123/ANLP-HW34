@@ -3,12 +3,14 @@ from __future__ import annotations
 import os
 
 from huggingface_hub import InferenceClient
+from openai import OpenAI
 
 from config import (
     HYDE_FALLBACK_MODELS,
     HF_TOKEN,
     HF_INFERENCE_PROVIDER,
     HYDE_PROVIDER,
+    OPENAI_API_KEY,
     TOGETHER_API_KEY,
     HYDE_DO_SAMPLE,
     HYDE_MAX_NEW_TOKENS,
@@ -29,7 +31,13 @@ class HyDEGenerator:
         do_sample: bool = HYDE_DO_SAMPLE,
     ) -> None:
         # Read env at runtime to support notebook-side key input after import time.
-        if provider == "together":
+        if provider == "openai":
+            resolved_token = hf_token or OPENAI_API_KEY or os.getenv("OPENAI_API_KEY")
+            if not resolved_token:
+                raise ValueError(
+                    "OpenAI API key is missing. Set OPENAI_API_KEY before HyDE generation."
+                )
+        elif provider == "together":
             resolved_token = hf_token or TOGETHER_API_KEY or os.getenv("TOGETHER_API_KEY")
             if not resolved_token:
                 raise ValueError(
@@ -49,7 +57,12 @@ class HyDEGenerator:
             m for m in HYDE_FALLBACK_MODELS if m != model_name
         ]
         self._active_model_idx = 0
-        self.client = self._build_client(self._candidate_models[self._active_model_idx])
+        self.client = None
+        self._openai_client = None
+        if self._provider == "openai":
+            self._openai_client = OpenAI(api_key=self._token)
+        else:
+            self.client = self._build_client(self._candidate_models[self._active_model_idx])
         self.model_name = self._candidate_models[self._active_model_idx]
         self.max_new_tokens = max_new_tokens
         self.temperature = temperature
@@ -68,6 +81,18 @@ class HyDEGenerator:
         return ("404" in msg and "not found" in msg) or "router.huggingface.co" in msg
 
     def _try_generate_with_client(self, prompt: str) -> str:
+        if self._provider == "openai":
+            resp = self._openai_client.chat.completions.create(
+                model=self.model_name,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=self.max_new_tokens,
+                temperature=self.temperature,
+            )
+            text = (resp.choices[0].message.content or "").strip()
+            if not text:
+                raise RuntimeError("OpenAI returned empty HyDE response.")
+            return text
+
         # Preferred path: chat-completions API.
         try:
             resp = self.client.chat.completions.create(
@@ -101,7 +126,7 @@ class HyDEGenerator:
             model_name = self._candidate_models[idx]
 
             # Switch client only when needed.
-            if idx != self._active_model_idx:
+            if self._provider != "openai" and idx != self._active_model_idx:
                 self.client = self._build_client(model_name)
                 self._active_model_idx = idx
                 self.model_name = model_name

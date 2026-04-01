@@ -7,10 +7,10 @@ cd hydeOnSciFact
 pip install -r requirements.txt
 ```
 
-Set Hugging Face token:
+Set API key for HyDE generation:
 
 ```bash
-export HF_TOKEN=your_token
+export OPENAI_API_KEY=your_key
 ```
 
 ## Run (Notebooks)
