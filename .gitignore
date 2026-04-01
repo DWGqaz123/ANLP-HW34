@@ -56,7 +56,7 @@ hs_err_pid*.log
 *.err
 
 # Experiment outputs
-results/
+results*/
 **/results/
 **/metrics.json
 **/per_query_results.jsonl
