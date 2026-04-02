@@ -1,43 +1,55 @@
-# macOS
+# ------------------------------
+# OS / editor metadata
+# ------------------------------
 .DS_Store
 .AppleDouble
 .LSOverride
+.vscode/
+.idea/
 
-# Python
+# ------------------------------
+# Python artifacts
+# ------------------------------
 __pycache__/
 *.py[cod]
 *.pyo
-*.egg-info/
 *.egg
-dist/
-build/
+*.egg-info/
 .eggs/
+build/
+dist/
+
+# Virtual environments
 .venv/
 venv/
 env/
 .python-version
-.coverage
-.coverage.*
-coverage.xml
-htmlcov/
+
+# Tool caches / coverage
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .tox/
 .nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
 
-# Jupyter Notebook
+# Jupyter
 .ipynb_checkpoints/
 
-# Environment / secrets
+# ------------------------------
+# Local env / secrets
+# ------------------------------
 .env
 .env.*
 !.env.example
 
-# Data / index / model artifacts
+# ------------------------------
+# ML / retrieval artifacts
+# ------------------------------
 *.tar.gz
-contriever_msmarco_index/
-*_index/
 *.faiss
 *.index
 *.npy
@@ -46,27 +58,35 @@ contriever_msmarco_index/
 *.bin
 *.safetensors
 *.ckpt
+contriever_msmarco_index/
+*_index/
 
-# JVM crash logs
+# ------------------------------
+# Runtime logs / dumps
+# ------------------------------
 hs_err_pid*.log
-
-# Logs / runtime dumps
 *.log
 *.out
 *.err
 
+# ------------------------------
 # Experiment outputs
+# ------------------------------
 results*/
 **/results/
+
+# Generic metric files are ignored by default.
 **/metrics.json
 **/per_query_results.jsonl
 
-# Local experimental workspace (not committed)
-hydeOnRAGBench/
+# Keep shared assignment artifacts in git.
+!all_results/**/metrics.json
+!all_results/**/per_query_results.jsonl
 
-# IDE
-.vscode/
-.idea/
+# ------------------------------
+# Project-local workspaces
+# ------------------------------
+hydeOnRAGBench/
 
 # Claude local settings
 .claude/settings.local.json
