@@ -1,0 +1,16 @@
+# Large generated artefacts — not committed
+cache/
+output/
+input/
+logs/
+doc_id_mapping.json
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Environment
+.env
