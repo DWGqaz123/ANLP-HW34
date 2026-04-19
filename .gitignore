@@ -83,6 +83,10 @@ results*/
 !all_results/**/metrics.json
 !all_results/**/per_query_results.jsonl
 
+# Keep GraphRAG retrieval results.
+!graphrag_hyde/results/
+!graphrag_hyde/results/**
+
 # ------------------------------
 # Project-local workspaces
 # ------------------------------

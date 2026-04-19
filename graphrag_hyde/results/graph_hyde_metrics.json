@@ -1,0 +1,40 @@
+{
+  "config": {
+    "mode": "graph_hyde",
+    "split": "test",
+    "data_source": "mteb/scifact (corpus:corpus/corpus, queries:queries/queries, qrels:default/test)",
+    "llm_model": "gpt-4o-mini",
+    "entity_embed_model": "text-embedding-3-large",
+    "retrieval_embed": "BAAI/bge-base-en-v1.5",
+    "top_ks": [
+      1,
+      3,
+      5,
+      10,
+      100
+    ]
+  },
+  "metrics": {
+    "Recall@1": 0.5439999999999999,
+    "Precision@1": 0.5666666666666667,
+    "MRR@1": 0.5666666666666667,
+    "nDCG@1": 0.5666666666666667,
+    "Recall@3": 0.7445555555555555,
+    "Precision@3": 0.2644444444444444,
+    "MRR@3": 0.6572222222222222,
+    "nDCG@3": 0.6708443038743451,
+    "Recall@5": 0.8112777777777778,
+    "Precision@5": 0.17866666666666667,
+    "MRR@5": 0.670888888888889,
+    "nDCG@5": 0.6993701404774871,
+    "Recall@10": 0.8808888888888888,
+    "Precision@10": 0.09866666666666667,
+    "MRR@10": 0.6795515873015873,
+    "nDCG@10": 0.7235526751338005,
+    "Recall@100": 0.9733333333333334,
+    "Precision@100": 0.011033333333333334,
+    "MRR@100": 0.6822664708561831,
+    "nDCG@100": 0.7437366087194206,
+    "num_queries": 300.0
+  }
+}
