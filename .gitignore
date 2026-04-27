@@ -91,6 +91,3 @@ results*/
 # Project-local workspaces
 # ------------------------------
 hydeOnRAGBench/
-
-# Claude local settings
-.claude/settings.local.json
